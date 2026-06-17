@@ -14,8 +14,8 @@
 - ...
 
 **Acceptance criteria:**
-- [ ] testable criterion 1
-- [ ] testable criterion 2
+- [ ] AC1: testable criterion 1
+- [ ] AC2: testable criterion 2
 
 **Edge cases:**
 - ...
@@ -24,4 +24,4 @@
 - `path` — how it's involved
 
 **Open questions:**
-- ...
+- None

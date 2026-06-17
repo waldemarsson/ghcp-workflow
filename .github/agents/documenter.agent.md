@@ -16,8 +16,8 @@ what the change made stale.
 
 ### 1. Understand what shipped
 Read `docs/features/<slug>/spec.md`, `plan.md`, and the **actual implementation diff**
-(`git status`, `git diff`, new files). Document what was *built*, not what was planned —
-they can differ.
+(`git status`, `git diff`, `git diff --cached`, new/untracked files). Document what was
+*built*, not what was planned — they can differ.
 
 ### 2. Write the durable feature record
 Read the canonical template `.github/workflow/templates/feature.md` and fill it into
@@ -27,8 +27,9 @@ Read the canonical template `.github/workflow/templates/feature.md` and fill it 
 ### 3. Discover every doc the change touches
 Don't just add one line. Search the repo for documentation affected by this change and
 update it:
-- **New, discoverable entry** — add the feature to the right place (`README.md`,
-  `CHANGELOG.md`, docs index/site) linking to `feature.md`. Match existing convention.
+- **New, discoverable entry** — add the feature to the right place (`README.md`, docs
+  index/site, feature index) linking to `feature.md` when the repo has that convention.
+  Do not update `CHANGELOG.md` or release notes unless the human explicitly asks.
 - **Stale docs** — grep for docs/examples/config references that this change makes
   outdated or wrong (renamed flags, changed defaults, new/removed options, updated APIs)
   and correct them. A change that invalidates existing docs but leaves them unchanged is

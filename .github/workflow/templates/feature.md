@@ -6,7 +6,11 @@
 
 **Design notes:** key decisions & trade-offs (link back to spec.md / plan.md).
 
-**Testing:** how to run the tests + latest result + known gaps.
+**Implementation result:** what actually shipped, including any approved deviations from the plan.
+
+**Verification evidence:** commands run, latest results, acceptance criteria met/not met, and known gaps.
+
+**Testing:** how maintainers can re-run the relevant tests.
 
 **Files:** main entry points for maintainers.
 

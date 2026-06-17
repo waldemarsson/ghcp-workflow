@@ -15,15 +15,17 @@ and surface issues before they cascade.
 ## Read-only — do not mutate anything
 
 Never modify code, tests, docs, `state.yml`, the working tree, the index, HEAD, or branch
-state. Inspect only, with `git status`, `git diff`, `git show`, `git log`. (Commits don't
-exist yet — the commit phase runs later — so review the **uncommitted working-tree diff**
-plus any untracked new files, not a SHA range.)
+state. Inspect only, with `git status`, `git diff`, `git diff --cached`, `git show`,
+`git log`, and `git ls-files --others --exclude-standard`. (Commits don't exist yet — the
+commit phase runs later — so review the **unstaged diff, staged diff, and untracked files**,
+not a SHA range.)
 
 ## Steps
 
 1. Read `docs/features/<slug>/spec.md` and `plan.md`.
-2. Inspect everything that changed: `git status`, `git diff`, and read new/untracked files
-   in full. Only comment on code you actually read.
+2. Inspect everything that changed: `git status`, `git diff`, `git diff --cached`, and
+   `git ls-files --others --exclude-standard`. Read new/untracked files in full. Only
+   comment on code you actually read.
 
 ## What to check
 

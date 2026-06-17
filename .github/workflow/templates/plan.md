@@ -29,10 +29,11 @@ implementations. (Omit this section for trivial features.)
 - `type/interface Name { ... }`
 
 ## Tasks
-Each task is an independently testable deliverable. Describe the deliverable, the contract
-it exposes, and the behaviors the implementer must cover with tests — not the code itself.
+Each task is an independently testable deliverable with a stable ID (T1, T2, ...).
+Describe the deliverable, the contract it exposes, and the behaviors the implementer must
+cover with tests — not the code itself.
 
-### Task N: <component>
+### T1: <component>
 **Files:**
 - Create: `exact/path`
 - Modify: `exact/path:line-range`
@@ -53,10 +54,11 @@ mine", not as test code.
 > End tasks at a green gate.
 
 ## Tests
-- acceptance criterion (from spec) -> the task/test that covers it
+- AC1 -> T1 / test behavior that covers it
+- AC2 -> T2 / test behavior that covers it
 
 ## Risks / trade-offs
 - ...
 
 ## Open questions
-- ...
+- None

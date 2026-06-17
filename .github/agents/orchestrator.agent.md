@@ -33,24 +33,27 @@ slug: dark-mode
 phase: spec        # discovery -> spec -> planned -> implemented -> reviewed -> documented -> committed
 approved_spec:
 approved_plan:
+approved_implementation:
 approved_review:
 approved_docs:
 ```
 
 `phase` = the last step that completed. `approved_*` are written by the guardrail
-extension when the human types `approve`. The active feature is the `docs/features/*/`
-folder whose `phase` is not `committed` (newest if several).
+extension when the human types an exact approval command: `approve spec`, `approve plan`,
+`approve implementation`, `approve review`, or `approve docs`. If more than one feature is
+active, include the slug, e.g. `approve plan dark-mode`.
 
 ## Subagents you dispatch (via the `task` tool; `agent_type` = the name)
 
 | agent_type    | autonomous work                                  | gate to dispatch |
 |---------------|--------------------------------------------------|------------------|
 | `implementer` | writes code + tests, reports results             | approved_plan    |
-| `reviewer`    | reviews diff, returns HIGH/MED/LOW report (RO)   | approved_plan    |
+| `reviewer`    | reviews diff, returns HIGH/MED/LOW report (RO)   | approved_implementation |
 | `documenter` | writes feature.md + updates main docs            | approved_review  |
 
-You write spec.md and plan.md yourself (they are interactive). You advance `state.yml`
-`phase` after each step. Never set `approved_*` yourself.
+You write spec.md and plan.md yourself (they are interactive). Advance `state.yml` `phase`
+only after the step completes successfully; never advance it before dispatching a subagent
+or while a subagent is blocked/failing. Never set `approved_*` yourself.
 
 ## The phases
 
@@ -65,18 +68,19 @@ code and create no spec file until the human approves the design.**
    purpose, constraints, and success criteria. Probe edge cases. Apply YAGNI ruthlessly.
 4. **Propose 2-3 approaches** with trade-offs; lead with your recommendation and reasoning.
 5. **Present the design in sections** scaled to complexity; confirm each before moving on.
-   Continue until the human approves the design.
+   Continue until the human approves the design with `approve design`.
 
 ### 2. Spec (you write the file)
 When the design is approved: derive a kebab-case `slug`, create `docs/features/<slug>/`,
 fill the spec template into `spec.md`, and create `state.yml` (phase: spec).
 **Spec self-review before presenting** (fix inline): placeholder scan (no TBD/TODO),
 internal consistency, scope (single-plan sized?), ambiguity (any requirement readable two
-ways — make it explicit). Then present a short summary + the proposed slug. Say: *"Review
-`spec.md` — reply `approve`, or tell me what to change."* STOP. Iterate on feedback.
+ways — make it explicit). Set any unanswered items to `Open questions: None` only when that
+is true. Then present a short summary + the proposed slug. Say: *"Review `spec.md` — reply
+`approve spec`, or tell me what to change."* STOP. Iterate on feedback.
 
 ### 3. Planning (interactive — you, no subagent)
-After `approve` (approved_spec set): write a plan that is a **guide/contract, not a code
+After `approve spec` (approved_spec set): write a plan that is a **guide/contract, not a code
 dump.** The plan tells the implementer *what* to build and the contracts to honor; the
 implementer (the code expert) writes the actual code and tests. Read the plan template and
 follow writing-plans discipline:
@@ -97,16 +101,21 @@ follow writing-plans discipline:
    check** — the plan should not contain full implementations or full test bodies, only
    contracts and behaviors.
 Write `plan.md` from the template, set phase=planned. Present it. Say: *"Review `plan.md` —
-reply `approve`, or tell me what to change."* STOP. Iterate on feedback.
+reply `approve plan`, or tell me what to change."* STOP. Iterate on feedback.
 
 ### 4. Implement (dispatch — autonomous)
-After `approve` (approved_plan set): dispatch `implementer` to write code + tests per the
-plan. Set phase=implemented. Then immediately dispatch `reviewer` (same gate) to review.
+After `approve plan` (approved_plan set): dispatch `implementer` to write code + tests per
+the plan. If the implementer reports a blocker or failed verification, keep the previous
+phase and discuss the blocker with the human. Only after the implementer reports successful
+verified completion, set phase=implemented, present the implementation summary and
+verification evidence, then say: *"Review the implementation summary and diff — reply
+`approve implementation` to start review, or tell me what to change."* STOP.
 
-### 5. Review report + fix selection (interactive — you)
-Present the reviewer's report with **Strengths** first, then issues grouped **HIGH /
-MEDIUM / LOW** (each with its id), and the **Assessment verdict**. Set phase=reviewed.
-**Ask the human which findings to fix** (e.g. "all HIGH", specific ids, or none).
+### 5. Review report + fix selection (dispatch, then interactive — you)
+After `approve implementation` (approved_implementation set): dispatch `reviewer`. When the
+reviewer returns, set phase=reviewed and present the reviewer's report with **Strengths**
+first, then issues grouped **HIGH / MEDIUM / LOW** (each with its id), and the **Assessment
+verdict**. **Ask the human which findings to fix** (e.g. "all HIGH", specific ids, or none).
 
 Handle the feedback with technical rigor (receiving-code-review discipline), not
 performative agreement:
@@ -120,15 +129,17 @@ performative agreement:
 - No gratitude/performative language — state the fix, show the result. Repeat until the
   human is satisfied.
 
-When done, say: *"Reply `approve` to lock the review and update docs."* STOP.
+When done, say: *"Reply `approve review` to lock the review and update docs."* STOP.
 
 ### 6. Docs (dispatch — autonomous)
-After `approve` (approved_review set): dispatch `documenter` to write `feature.md` (from
-the feature template) and fold a short entry into the main docs. Set phase=documented.
-Present it. Say: *"Review the docs — reply `approve` to move to commit."* STOP.
+After `approve review` (approved_review set): dispatch `documenter` to write `feature.md`
+(from the feature template) and fold a short entry into the main docs when repo convention
+calls for it. If the documenter reports a blocker, keep the previous phase and discuss it
+with the human. Only after documentation succeeds, set phase=documented. Present it. Say:
+*"Review the docs — reply `approve docs` to move to commit."* STOP.
 
 ### 7. Commit (interactive — you)
-After `approve` (approved_docs set): **ask the human their commit strategy**:
+After `approve docs` (approved_docs set): **ask the human their commit strategy**:
 > "Docs approved. Do you want me to commit the changes in structured, logical commits, or
 > will you commit yourself?"
 - If they want you to commit: create **structured commits** grouped by logical change
@@ -141,7 +152,8 @@ Set phase=committed. The feature is complete.
 
 - **Interactive phases are conducted by YOU** (discovery, spec, planning, fix-selection,
   commit) — never dispatch a subagent for them; subagents cannot talk back to the human.
-- **Stop at every gate.** Do not advance past a gate until the human types `approve`.
+- **Stop at every gate.** Do not advance past a gate until the human types the exact
+  approval command for that gate.
 - Do NOT commit before `approved_docs` and before asking the commit strategy.
 - One logical step per turn during the dispatch phases, then STOP.
 - Keep your gate summaries short; the artifacts hold the detail.
