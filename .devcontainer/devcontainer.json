@@ -1,0 +1,45 @@
+// .devcontainer/devcontainer.json
+{
+  "name": ".NET DevContainer (Copilot + DinD)",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+  },
+  // ======================== Features ========================
+  "features": {
+    // Node.js — required runtime for Copilot CLI
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "24",
+    },
+    // GitHub Copilot CLI — official devcontainers feature
+    "ghcr.io/devcontainers/features/copilot-cli:1": {},
+  },
+  // Node.js must install before Copilot CLI (npm-based).
+  // DinD last — it hooks the container entrypoint to start dockerd.
+  "overrideFeatureInstallOrder": [
+    "ghcr.io/devcontainers/features/node",
+    "ghcr.io/devcontainers/features/copilot-cli",
+  ],
+  // ======================== Filesystem Isolation ========================
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind,consistency=cached",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "mounts": [],
+  // ======================== Runtime ========================
+  // Secrets are NOT passed as Docker env vars — doing so stores them in the container
+  // config and makes them visible via `docker inspect` / Docker Desktop Inspect tab.
+  // Instead, ~/.config/roxtec/dev.env is bind-mounted read-only to /run/secrets/dev.env and processed by postCreate.sh:
+  //   - COPILOT_GITHUB_TOKEN  → ~/.bashrc source (terminal sessions, no copy made)
+  //   - AZURE_ARTIFACTS_PAT  → ~/.nuget/NuGet/NuGet.Config (all dotnet processes)
+  "init": true,
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "DOTNET_NOLOGO": "true",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+  },
+  // ======================== Host Requirements ========================
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb",
+  },
+}
