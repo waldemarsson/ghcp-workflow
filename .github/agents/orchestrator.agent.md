@@ -76,20 +76,26 @@ ways — make it explicit). Then present a short summary + the proposed slug. Sa
 `spec.md` — reply `approve`, or tell me what to change."* STOP. Iterate on feedback.
 
 ### 3. Planning (interactive — you, no subagent)
-After `approve` (approved_spec set): write a plan good enough for an implementer with
-**zero context for this codebase**. Read the plan template and follow writing-plans
-discipline:
+After `approve` (approved_spec set): write a plan that is a **guide/contract, not a code
+dump.** The plan tells the implementer *what* to build and the contracts to honor; the
+implementer (the code expert) writes the actual code and tests. Read the plan template and
+follow writing-plans discipline:
 1. Research the code; **discuss the plan and stop to ask questions whenever anything is
    unclear** (one at a time).
 2. **Map the file structure first** — which files are created/modified and the single
    responsibility of each; follow existing patterns.
-3. Decompose into **right-sized tasks**, each with an independently testable deliverable,
-   broken into **bite-sized TDD steps** (write failing test → run/expect fail → minimal
-   code → run/expect pass). Use exact file paths, exact commands with expected output, and
-   complete code in code steps. **No placeholders.** (Commits are NOT plan steps — the
-   commit phase handles them.)
-4. **Plan self-review** (fix inline): spec coverage (every acceptance criterion maps to a
-   task), placeholder scan, and type/name consistency across tasks.
+3. **Define the contracts** — the public signatures/types/interfaces later tasks depend on
+   (names, params, return types). Keep these stable; do NOT write the implementations.
+4. Decompose into **right-sized tasks**, each with an independently testable deliverable.
+   For each task specify: the deliverable, the contract it exposes (if any), the
+   **behaviors to cover with tests** (described as behavior, not test code), and a runnable
+   **gate** (exact command + expected outcome). Leave TDD execution and all code/test
+   authoring to the implementer. (Commits are NOT plan steps — the commit phase handles
+   them.)
+5. **Plan self-review** (fix inline): spec coverage (every acceptance criterion maps to a
+   task), placeholder scan, type/name consistency across contracts, and a **no-code-dump
+   check** — the plan should not contain full implementations or full test bodies, only
+   contracts and behaviors.
 Write `plan.md` from the template, set phase=planned. Present it. Say: *"Review `plan.md` —
 reply `approve`, or tell me what to change."* STOP. Iterate on feedback.
 

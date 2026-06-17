@@ -85,7 +85,8 @@ const session = await joinSession({
             const word = input.prompt.trim().toLowerCase();
             if (!APPROVE_WORDS.has(word)) return;
 
-            const sp = findActiveStatePath(input.cwd);
+            const cwd = input.workingDirectory ?? input.cwd;
+            const sp = findActiveStatePath(cwd);
             if (!sp) return;
 
             let txt = readFileSync(sp, "utf8");
@@ -115,7 +116,8 @@ const session = await joinSession({
             const reqKey = REQUIRED_APPROVAL[at];
             if (!reqKey) return; // spec — always allowed
 
-            const sp = findActiveStatePath(input.cwd);
+            const cwd = input.workingDirectory ?? input.cwd;
+            const sp = findActiveStatePath(cwd);
             let approved = false;
             let slug = "(no active feature)";
             if (sp) {

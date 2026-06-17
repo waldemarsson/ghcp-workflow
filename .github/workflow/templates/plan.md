@@ -1,11 +1,17 @@
 # Plan: <feature>
 
-> Scale detail to complexity: trivial features need only a task or two; non-trivial ones
-> get the full task/step breakdown below. Never leave placeholders (no "TBD"/"TODO").
+> This plan is a **guide/contract, not a code dump.** Define *what* to build and the
+> contracts other tasks depend on; leave *how* (the actual implementation and test code) to
+> the implementer, who is the code expert. Scale detail to complexity: trivial features need
+> only a task or two. Never leave placeholders (no "TBD"/"TODO").
 
 **Goal:** one sentence describing what this builds.
 
 **Architecture:** 2-3 sentences on the approach.
+
+> **For the implementer:** the signatures and behaviors below are the contract — keep the
+> public names/types stable so tasks compose, but you own the implementation details and the
+> tests. Work TDD-style and run each task's gate before moving on.
 
 ## Global constraints
 - Project-wide requirements copied verbatim from spec.md (version floors, naming/copy
@@ -16,27 +22,35 @@ Map every file before defining tasks (one clear responsibility each; follow exis
 patterns; files that change together live together):
 - `exact/path/to/file` — Create | Modify — responsibility
 
+## Public contracts (keep stable across tasks)
+Only the signatures/types later tasks depend on — names, params, return types. NOT
+implementations. (Omit this section for trivial features.)
+- `module/path` — `functionName(args): ReturnType` — one-line behavior
+- `type/interface Name { ... }`
+
 ## Tasks
-Each task is the smallest unit with its own test cycle and an independently testable
-deliverable.
+Each task is an independently testable deliverable. Describe the deliverable, the contract
+it exposes, and the behaviors the implementer must cover with tests — not the code itself.
 
 ### Task N: <component>
 **Files:**
 - Create: `exact/path`
 - Modify: `exact/path:line-range`
-- Test: `tests/exact/path`
 
-**Interfaces:**
-- Consumes: <exact signatures this task uses from earlier tasks>
-- Produces: <exact function names / param & return types later tasks rely on>
+**Deliverable:** what works when this task is done.
 
-- [ ] Step 1 — write the failing test (show the actual test code)
-- [ ] Step 2 — run it, expect FAIL (exact command + expected message)
-- [ ] Step 3 — minimal implementation to pass (show the actual code)
-- [ ] Step 4 — run it, expect PASS (exact command)
+**Contract (if any):** exact public names/types/signatures this task exposes for later tasks
+to consume. Keep these stable; the implementer fills in the bodies.
 
-> Commits are NOT part of plan steps — committing is handled later by the workflow's
-> commit phase. End tasks at green tests.
+**Behaviors to cover with tests:** the cases the implementer must write tests for (happy
+path, edge cases, error handling) — described as behavior, e.g. "first reveal is never a
+mine", not as test code.
+
+**Gate:** the exact command(s) to run and the expected outcome (e.g. `npm test` green,
+`npm run build` exits 0).
+
+> Commits are NOT plan steps — committing is handled later by the workflow's commit phase.
+> End tasks at a green gate.
 
 ## Tests
 - acceptance criterion (from spec) -> the task/test that covers it
