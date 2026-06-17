@@ -1,6 +1,6 @@
 # Documentation Convention Reference
 
-Load this file when the main flow tells you the repo's convention is unclear, or when you recognize signals that don't match an obvious pattern.
+Load this file when the repo's doc convention is unclear, or when you recognize signals that don't match an obvious pattern.
 
 ## Common layouts
 
@@ -165,4 +165,4 @@ Match the existing style. When in doubt, use relative paths — they work on Git
 
 Pick the pattern used by the **most recently modified** docs. Use `git log -1 --format=%ci <file>` to check. Recent > old when conventions drifted.
 
-If the branch itself introduces new docs, that counts as the new convention going forward — but only if the user explicitly set that direction.
+If this change itself introduces new docs, that counts as the new convention going forward — but only if the human explicitly set that direction.

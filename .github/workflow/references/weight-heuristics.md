@@ -1,6 +1,9 @@
 # Weight Heuristics
 
-Load this when you're unsure whether a specific change has enough weight to document.
+Load this when you're unsure whether a specific change has enough weight to document. It's
+written for the **documenter**, which judges a feature's implementation diff (the commit
+phase runs later, so commits usually don't exist yet) — read "branch" below as "this
+feature's change."
 
 ## The core test
 
@@ -151,11 +154,14 @@ These almost never have weight on their own:
 - Bug fixes that restore documented behavior
 - Refactors that don't change external surface
 
-If the entire branch consists of these, say so and ask the user whether to proceed.
+If the entire change consists of these, say so in your report — `feature.md` is still
+written, but no broader docs are needed.
 
 ## Inferring weight from commits
 
-Run `git log --oneline origin/main..HEAD` and scan for signals:
+At doc time the commit phase hasn't run yet, so usually judge weight from the implementation
+diff and the spec/plan. If the feature does have commits, scan their messages for signals —
+conventional-commit prefixes are a quick guide:
 
 | Prefix | Typical weight |
 |---|---|

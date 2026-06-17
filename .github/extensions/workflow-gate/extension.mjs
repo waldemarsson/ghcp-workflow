@@ -8,6 +8,16 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 
+// ── What this gate enforces ──────────────────────────────────────────────────
+// HARD (enforced here): dispatching an autonomous subagent (implementer /
+//   reviewer / documenter) is blocked until the previous phase's approval is
+//   recorded in state.yml. A subagent dispatch (the `task` tool) is the only
+//   action this extension can block.
+// SOFT (convention only, NOT enforced here): the interactive steps the
+//   orchestrator runs itself — discovery, writing spec.md, writing plan.md —
+//   produce reversible markdown and are gated by the orchestrator's own
+//   discipline, not by this extension.
+
 // Phase specialist agent_types this gate governs (dispatched subagents only).
 const PHASES = ["implementer", "reviewer", "documenter"];
 
@@ -37,6 +47,14 @@ const APPROVAL_COMMANDS = {
 };
 const APPROVE_HELP =
     'Use an exact approval command: "approve spec", "approve plan", "approve implementation", "approve review", or "approve docs". Add the feature slug when more than one feature is active, e.g. "approve plan dark-mode".';
+
+// Gates in order, plus the full phase sequence — used by "reopen <step>" to clear
+// an approved step and every later approval, reset the phase, and validate the target.
+const GATE_ORDER = ["spec", "plan", "implementation", "review", "docs"];
+const PHASE_SEQUENCE = ["spec", "planned", "implemented", "reviewed", "documented", "committed"];
+const REOPEN_HELP =
+    'To revise an approved step use an exact reopen command: "reopen spec", "reopen plan", "reopen implementation", "reopen review", or "reopen docs". It clears that step\'s approval and every later approval and resets the phase so the artifact can be revised and re-approved. Add the slug when more than one feature is active, e.g. "reopen plan dark-mode".';
+
 const FEATURES_DIR = "docs/features";
 
 function collectActiveStates(cwd) {
@@ -79,6 +97,25 @@ function parseApprovalPrompt(prompt) {
     return { gate: match[1], slug: match[2] };
 }
 
+function parseReopenPrompt(prompt) {
+    const trimmed = prompt.trim().toLowerCase();
+    if (!trimmed.startsWith("reopen")) return null;
+    const match = trimmed.match(
+        /^reopen\s+(spec|plan|implementation|review|docs)(?:\s+([a-z0-9][a-z0-9-]*))?$/,
+    );
+    if (!match) return { error: REOPEN_HELP };
+    return { gate: match[1], slug: match[2] };
+}
+
+// Clear the named gate's approval and every approval after it (so a revised
+// upstream artifact forces re-approval of all downstream steps).
+function clearApprovalsFrom(txt, gate) {
+    for (const g of GATE_ORDER.slice(GATE_ORDER.indexOf(gate))) {
+        txt = setKey(txt, APPROVAL_COMMANDS[g].key, "");
+    }
+    return txt;
+}
+
 function extractSlugFromArgs(args) {
     const text = [args.prompt, args.description, args.name]
         .filter((value) => typeof value === "string")
@@ -108,6 +145,48 @@ const session = await joinSession({
     hooks: {
         // Record a gate approval only for exact commands like "approve plan".
         onUserPromptSubmitted: async (input) => {
+            const cwd = input.workingDirectory ?? input.cwd ?? process.cwd();
+
+            // Reopen/revise an approved step: clear it + every later approval, reset phase.
+            const reopen = parseReopenPrompt(input.prompt);
+            if (reopen) {
+                if (reopen.error) {
+                    await session.log(`workflow-gate: ${reopen.error}`, { level: "warning" });
+                    return { additionalContext: `[workflow-gate] ${reopen.error}` };
+                }
+                const states = collectActiveStates(cwd);
+                const active = findState(cwd, reopen.slug);
+                if (!active) {
+                    const reason =
+                        states.length > 1 && !reopen.slug
+                            ? `Multiple active features found; include the slug in the reopen command. ${REOPEN_HELP}`
+                            : `No active feature${reopen.slug ? ` with slug "${reopen.slug}"` : ""} found.`;
+                    await session.log(`workflow-gate: ${reason}`, { level: "warning" });
+                    return { additionalContext: `[workflow-gate] ${reason}` };
+                }
+                const target = APPROVAL_COMMANDS[reopen.gate];
+                const curIdx = PHASE_SEQUENCE.indexOf(active.state.phase);
+                const tgtIdx = PHASE_SEQUENCE.indexOf(target.phase);
+                if (tgtIdx < 0 || curIdx < 0 || tgtIdx > curIdx) {
+                    const reason = `Cannot reopen "${reopen.gate}" for "${active.state.slug}": that step has not been reached (current phase "${active.state.phase}").`;
+                    await session.log(`workflow-gate: ${reason}`, { level: "warning" });
+                    return { additionalContext: `[workflow-gate] ${reason}` };
+                }
+                let rtxt = readFileSync(active.path, "utf8");
+                rtxt = clearApprovalsFrom(rtxt, reopen.gate);
+                rtxt = setKey(rtxt, "phase", target.phase);
+                writeFileSync(active.path, rtxt);
+                const cleared = GATE_ORDER.slice(GATE_ORDER.indexOf(reopen.gate))
+                    .map((g) => APPROVAL_COMMANDS[g].key)
+                    .join(", ");
+                await session.log(
+                    `workflow-gate: reopened "${reopen.gate}" for "${active.state.slug}" — phase reset to "${target.phase}", cleared: ${cleared}.`,
+                );
+                return {
+                    additionalContext: `[workflow-gate] Reopened "${reopen.gate}" for "${active.state.slug}". Phase reset to "${target.phase}"; cleared approvals: ${cleared}. Revise the artifact, then re-approve each step in order.`,
+                };
+            }
+
             const approval = parseApprovalPrompt(input.prompt);
             if (!approval) return;
             if (approval.error) {
@@ -115,7 +194,6 @@ const session = await joinSession({
                 return { additionalContext: `[workflow-gate] ${approval.error}` };
             }
 
-            const cwd = input.workingDirectory ?? input.cwd ?? process.cwd();
             const states = collectActiveStates(cwd);
             const active = findState(cwd, approval.slug);
             if (!active) {
@@ -129,7 +207,7 @@ const session = await joinSession({
 
             const expected = APPROVAL_COMMANDS[approval.gate];
             if (active.state.phase !== expected.phase) {
-                const reason = `Cannot record "${approval.gate}" approval for "${active.state.slug}": state.yml is at phase "${active.state.phase}", expected "${expected.phase}".`;
+                const reason = `Cannot record "${approval.gate}" approval for "${active.state.slug}": state.yml phase is "${active.state.phase}" but the "${approval.gate}" gate needs phase "${expected.phase}". If the ${approval.gate} step just finished, the orchestrator must advance state.yml 'phase' to "${expected.phase}" before you approve. If you meant to revise an earlier step, use "reopen <step>".`;
                 await session.log(`workflow-gate: ${reason}`, { level: "warning" });
                 return { additionalContext: `[workflow-gate] ${reason}` };
             }

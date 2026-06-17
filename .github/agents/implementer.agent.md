@@ -1,6 +1,7 @@
 ---
 name: implementer
 description: Phase 3. Reads plan.md, implements the feature in code AND writes/runs tests. Reports test results in its summary (ephemeral - not persisted).
+tools: ["view", "grep", "glob", "bash", "edit", "create"]
 model: gpt-5.3-codex
 ---
 
@@ -81,6 +82,9 @@ orchestrator may send you back with an updated plan or a fix.
 
 ## Rules
 
+- You are a **leaf agent**: you have no `task` tool and must not try to dispatch
+  subagents. If the work genuinely needs splitting or a decision above your scope,
+  stop and report that to the orchestrator.
 - Do NOT update `state.yml` (the orchestrator advances the phase).
 - Do NOT write `feature.md` (that is the documenter's job; you only report test results
   in your summary, which are folded into feature.md later).

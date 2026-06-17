@@ -20,6 +20,12 @@ state. Inspect only, with `git status`, `git diff`, `git diff --cached`, `git sh
 commit phase runs later — so review the **unstaged diff, staged diff, and untracked files**,
 not a SHA range.)
 
+You have `bash`, which *can* write — so read-only is your **discipline, not a sandbox**. Use
+`bash` only for inspection: the git commands above, reading files, and read-only test/build
+queries. Never use it to write or move files, stage (`git add`), commit,
+`checkout`/`switch`/`reset`/`restore`, change config, or run formatters/codegen/build steps
+that modify the tree. If something must change, say so in the report — don't do it yourself.
+
 ## Steps
 
 1. Read `docs/features/<slug>/spec.md` and `plan.md`.
@@ -46,7 +52,7 @@ not a SHA range.)
 Categorize by **actual** severity — not everything is HIGH. **Acknowledge what was done
 well** before listing issues; accurate praise helps the implementer trust the rest.
 
-## Output format (returned to the orchestrator; ephemeral, not saved)
+## Output format (returned to the orchestrator, which saves it to `docs/features/<slug>/review.md`)
 
 ```
 ### Strengths
