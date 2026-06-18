@@ -154,8 +154,8 @@ These almost never have weight on their own:
 - Bug fixes that restore documented behavior
 - Refactors that don't change external surface
 
-If the entire change consists of these, say so in your report — `feature.md` is still
-written, but no broader docs are needed.
+If the entire change consists of these, say so in your report — no documentation needs
+updating.
 
 ## Inferring weight from commits
 

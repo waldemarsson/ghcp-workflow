@@ -23,7 +23,6 @@ those gates is your discipline. Respect every gate; never work around a denial.
 Every artifact MUST follow the shared template so structure is identical every time:
 - spec  -> fill `.github/workflow/templates/spec.md`
 - plan  -> fill `.github/workflow/templates/plan.md`
-- feature doc -> documenter fills `.github/workflow/templates/feature.md`
 
 Read the template before writing the artifact and keep its exact section structure.
 
@@ -76,7 +75,7 @@ Before anything else, scan `docs/features/*/state.yml` for a feature whose `phas
 |---------------|--------------------------------------------------|------------------|
 | `implementer` | writes code + tests, reports results             | approved_plan    |
 | `reviewer`    | reviews diff, returns HIGH/MED/LOW report (RO)   | approved_implementation |
-| `documenter` | writes feature.md + updates main docs            | approved_review  |
+| `documenter` | updates the repo's own docs to reflect the change | approved_review  |
 
 You write spec.md and plan.md yourself (they are interactive). Advance `state.yml` `phase`
 only after the step completes successfully; never advance it before dispatching a subagent
@@ -97,7 +96,7 @@ the work turns out bigger or smaller). Record it in `state.yml` as `track: stand
   - You may **skip dispatching the reviewer** and instead self-review and present the diff
     yourself before `approve review` — but say explicitly it was a self-review, not an
     independent one.
-  - Docs still produce `feature.md`; "no broader docs needed" is a fine outcome.
+  - Docs phase still runs; "no doc changes needed" is a fine outcome.
 
 ## The phases
 
@@ -184,9 +183,10 @@ performative agreement:
 When done, say: *"Reply `approve review` to lock the review and update docs."* STOP.
 
 ### 6. Docs (dispatch — autonomous)
-After `approve review` (approved_review set): dispatch `documenter` to write `feature.md`
-(from the feature template) and fold a short entry into the main docs when repo convention
-calls for it. If the documenter reports a blocker, keep the previous phase and discuss it
+After `approve review` (approved_review set): dispatch `documenter` to update the repo's own
+documentation so it reflects what shipped — starting from the README and following its
+references, adding what's new and fixing what the change made stale (no doc changes is a
+valid outcome). If the documenter reports a blocker, keep the previous phase and discuss it
 with the human. Only after documentation succeeds, set phase=documented. Present it. Say:
 *"Review the docs — reply `approve docs` to move to commit."* STOP.
 

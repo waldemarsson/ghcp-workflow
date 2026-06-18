@@ -86,8 +86,8 @@ orchestrator may send you back with an updated plan or a fix.
   subagents. If the work genuinely needs splitting or a decision above your scope,
   stop and report that to the orchestrator.
 - Do NOT update `state.yml` (the orchestrator advances the phase).
-- Do NOT write `feature.md` (that is the documenter's job; you only report test results
-  in your summary, which are folded into feature.md later).
+- Do NOT write or update documentation (that is the documenter's job; you only report test
+  results in your summary, which inform the docs later).
 - Follow the plan's **contracts and required behaviors**; you own the implementation and
   test code. Improve on the plan's suggested *how* freely, but if a contract or required
   behavior seems wrong, stop and ask — never silently change a contract or guess past
