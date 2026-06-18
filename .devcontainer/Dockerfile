@@ -35,3 +35,8 @@ RUN apt-get update \
     && ln -s "$(which batcat)" /usr/local/bin/bat \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# ── micro editor (external prompt editing via Ctrl+G) ────────────────────────
+# apt version is stale; install latest from GitHub releases instead.
+RUN curl -fsSL https://getmic.ro | bash \
+    && mv micro /usr/local/bin/micro

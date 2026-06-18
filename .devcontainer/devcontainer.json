@@ -35,6 +35,8 @@
   "containerEnv": {
     "DOTNET_NOLOGO": "true",
     "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "EDITOR": "micro",
+    "VISUAL": "micro",
   },
   // ======================== Host Requirements ========================
   "hostRequirements": {
