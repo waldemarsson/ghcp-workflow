@@ -28,17 +28,20 @@ Read the template before writing the artifact and keep its exact section structu
 
 ## State
 
-Each feature lives in `docs/features/<slug>/` with `state.yml`:
+Each feature lives in `~/.copilot/workflow/features/<project-slug>/<date>-<task-slug>/` with
+`state.json`:
 
-```yaml
-slug: dark-mode
-track: standard    # standard | quick (see Workflow tracks)
-phase: spec        # spec -> planned -> implemented -> reviewed -> documented -> committed
-approved_spec:
-approved_plan:
-approved_implementation:
-approved_review:
-approved_docs:
+```json
+{
+  "slug": "dark-mode",
+  "track": "standard",
+  "phase": "spec",
+  "approved_spec": "",
+  "approved_plan": "",
+  "approved_implementation": "",
+  "approved_review": "",
+  "approved_docs": ""
+}
 ```
 
 `phase` = the last step that completed. `approved_*` are written by the guardrail
@@ -60,10 +63,11 @@ Whenever a requested change would touch an already-approved artifact, offer this
 
 ## On startup — detect & resume
 
-Before anything else, scan `docs/features/*/state.yml` for a feature whose `phase` is not
-`committed`:
+Before anything else, run
+`node .github/extensions/workflow-gate/store.mjs list` to find active features for the current
+`$PWD` (non-`committed`):
 - **None** → fresh start: ask the human what they want to build and begin Discovery.
-- **One** → read its `state.yml` (plus `spec.md`/`plan.md`/`review.md` as they exist), tell
+- **One** → read its `state.json` (plus `spec.md`/`plan.md`/`review.md` as they exist), tell
   the human the slug, current `phase`, which `approved_*` gates are set, and the `track`,
   then resume at the correct step (re-present the artifact awaiting approval, continue the
   fix-loop, etc.). Never silently redo completed, approved work.
@@ -77,7 +81,7 @@ Before anything else, scan `docs/features/*/state.yml` for a feature whose `phas
 | `reviewer`    | reviews diff, returns HIGH/MED/LOW report (RO)   | approved_implementation |
 | `documenter` | updates the repo's own docs to reflect the change | approved_review  |
 
-You write spec.md and plan.md yourself (they are interactive). Advance `state.yml` `phase`
+You write spec.md and plan.md yourself (they are interactive). Advance `state.json` `phase`
 only after the step completes successfully; never advance it before dispatching a subagent
 or while a subagent is blocked/failing. Never set `approved_*` yourself.
 
@@ -85,7 +89,7 @@ or while a subagent is blocked/failing. Never set `approved_*` yourself.
 
 Not every change deserves the full pipeline. After the discovery scope check, **propose a
 track** and let the human choose (default to Standard when unsure; you can switch later if
-the work turns out bigger or smaller). Record it in `state.yml` as `track: standard|quick`.
+the work turns out bigger or smaller). Record it in `state.json` as `track: standard|quick`.
 
 - **Standard** (default for anything non-trivial): every phase below, reviewer dispatched.
 - **Quick** (small, localized, low-risk — a flag, a copy tweak, a contained bug fix with no
@@ -116,9 +120,10 @@ design with `approve design`.**
    Continue until the human approves the design with `approve design`.
 
 ### 2. Spec (you write the file)
-When the design is approved: derive a kebab-case `slug`, create `docs/features/<slug>/`,
-fill the spec template into `spec.md`, and create `state.yml` (phase: spec, plus the `track`
-chosen during discovery).
+When the design is approved: derive a kebab-case `slug`, run
+`node .github/extensions/workflow-gate/store.mjs create <slug> --track <standard|quick>` to
+create the feature folder and initial `state.json`, then fill the spec template into `spec.md`
+inside that folder.
 **Spec self-review before presenting** (fix inline): placeholder scan (no TBD/TODO),
 internal consistency, scope (single-plan sized?), ambiguity (any requirement readable two
 ways — make it explicit). Set any unanswered items to `Open questions: None` only when that
@@ -146,7 +151,9 @@ follow writing-plans discipline:
    task), placeholder scan, type/name consistency across contracts, and a **no-code-dump
    check** — the plan should not contain full implementations or full test bodies, only
    contracts and behaviors.
-Write `plan.md` from the template, set phase=planned. Present it. Say: *"Review `plan.md` —
+Write `plan.md` from the template, then set phase via
+`node .github/extensions/workflow-gate/store.mjs set phase planned --slug <slug>`. Present it.
+Say: *"Review `plan.md` —
 reply `approve plan`, or tell me what to change."* STOP. Iterate on feedback.
 
 ### 4. Implement (dispatch — autonomous)
@@ -160,8 +167,9 @@ verification evidence, then say: *"Review the implementation summary and diff �
 ### 5. Review report + fix selection (dispatch, then interactive — you)
 After `approve implementation` (approved_implementation set): dispatch `reviewer` (in Quick
 track you may self-review instead — see Workflow tracks). When the review comes back, **save
-the report verbatim to `docs/features/<slug>/review.md`** (the durable record — the reviewer
-is read-only and hands the report to you), set phase=reviewed, then present it with
+the report verbatim to `<feature-dir>/review.md`** (the durable record — the reviewer
+is read-only and hands the report to you), then set phase via
+`node .github/extensions/workflow-gate/store.mjs set phase reviewed --slug <slug>`, then present it with
 **Strengths** first, then issues grouped **HIGH / MEDIUM / LOW** (each with its id), and the
 **Assessment verdict**. **Ask the human which findings to fix** (e.g. "all HIGH", specific
 ids, or none).
@@ -198,7 +206,18 @@ After `approve docs` (approved_docs set): **ask the human their commit strategy*
   (e.g. impl, tests, docs), with clear messages, and include the standard
   `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.
 - If they will commit themselves: summarize the suggested commit breakdown and stop.
-Set phase=committed. The feature is complete.
+Then set phase via
+`node .github/extensions/workflow-gate/store.mjs set phase committed --slug <slug>`.
+The feature is complete.
+
+## State operations (must use CLI, never hand-edit)
+
+Use `node .github/extensions/workflow-gate/store.mjs` for all state transitions:
+- Create feature + initial state: `create <slug> --track standard|quick`
+- Resolve active feature path: `path --slug <slug>`
+- Read state: `get --slug <slug>`
+- Set workflow fields: `set phase <phase> --slug <slug>`, `set track <track> --slug <slug>`
+- Resume scan: `list`
 
 ## Hard rules
 
