@@ -264,7 +264,92 @@ test("handleApproval records correct approval when phase matches and is idempote
     }
 });
 
-test("handleApproval returns guidance for phase mismatch, unknown step, and ambiguous slug", () => {
+test("handleApproval bare approve/go/ok use current phase for sole active feature", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
+    try {
+        const pwd = "/repo/app";
+
+        const specDir = createFeature(pwd, "spec-only", { date: "2026-06-20", track: "standard" }, home);
+        const specStatePath = path.join(specDir, "state.json");
+        const specResult = handleApproval("approve", pwd, home);
+        assert.match(specResult.context, /approved_spec/);
+        assert.match(readState(specStatePath).approved_spec, /^\d{4}-\d{2}-\d{2}$/);
+
+        setStateField(specStatePath, "phase", "committed");
+
+        const planDir = createFeature(pwd, "plan-only", { date: "2026-06-21", track: "standard" }, home);
+        const planStatePath = path.join(planDir, "state.json");
+        setStateField(planStatePath, "phase", "planned");
+
+        const goResult = handleApproval("go", pwd, home);
+        assert.match(goResult.context, /approved_plan/);
+        assert.match(readState(planStatePath).approved_plan, /^\d{4}-\d{2}-\d{2}$/);
+
+        setStateField(planStatePath, "phase", "committed");
+
+        const implDir = createFeature(pwd, "impl-only", { date: "2026-06-22", track: "standard" }, home);
+        const implStatePath = path.join(implDir, "state.json");
+        setStateField(implStatePath, "phase", "implemented");
+
+        const okResult = handleApproval("ok", pwd, home);
+        assert.match(okResult.context, /approved_implementation/);
+        assert.match(readState(implStatePath).approved_implementation, /^\d{4}-\d{2}-\d{2}$/);
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test("handleApproval verb plus slug uses named active feature current phase", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
+    try {
+        const pwd = "/repo/app";
+        const aDir = createFeature(pwd, "alpha", { date: "2026-06-20", track: "standard" }, home);
+        const bDir = createFeature(pwd, "beta", { date: "2026-06-21", track: "standard" }, home);
+        const cDir = createFeature(pwd, "gamma", { date: "2026-06-22", track: "standard" }, home);
+        const aStatePath = path.join(aDir, "state.json");
+        const bStatePath = path.join(bDir, "state.json");
+        const cStatePath = path.join(cDir, "state.json");
+        setStateField(aStatePath, "phase", "planned");
+        setStateField(bStatePath, "phase", "implemented");
+        setStateField(cStatePath, "phase", "reviewed");
+
+        const approveResult = handleApproval("approve alpha", pwd, home);
+        assert.match(approveResult.context, /approved_plan/);
+        assert.match(readState(aStatePath).approved_plan, /^\d{4}-\d{2}-\d{2}$/);
+
+        const goResult = handleApproval("go beta", pwd, home);
+        assert.match(goResult.context, /approved_implementation/);
+        assert.match(readState(bStatePath).approved_implementation, /^\d{4}-\d{2}-\d{2}$/);
+
+        const okResult = handleApproval("ok gamma", pwd, home);
+        assert.match(okResult.context, /approved_review/);
+        assert.match(readState(cStatePath).approved_review, /^\d{4}-\d{2}-\d{2}$/);
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test("handleApproval bare verb disambiguates for multiple active features", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
+    try {
+        const pwd = "/repo/app";
+        const aDir = createFeature(pwd, "a", { date: "2026-06-20", track: "standard" }, home);
+        const bDir = createFeature(pwd, "b", { date: "2026-06-21", track: "standard" }, home);
+        const aStatePath = path.join(aDir, "state.json");
+        const bStatePath = path.join(bDir, "state.json");
+        setStateField(aStatePath, "phase", "planned");
+        setStateField(bStatePath, "phase", "planned");
+
+        const result = handleApproval("approve", pwd, home);
+        assert.match(result.context, /Multiple active features/);
+        assert.equal(readState(aStatePath).approved_plan, "");
+        assert.equal(readState(bStatePath).approved_plan, "");
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test("handleApproval returns guidance for phase mismatch, malformed input, and ambiguous slug", () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
     try {
         const pwd = "/repo/app";
@@ -272,8 +357,49 @@ test("handleApproval returns guidance for phase mismatch, unknown step, and ambi
         createFeature(pwd, "b", { date: "2026-06-21", track: "standard" }, home);
 
         assert.match(handleApproval("approve plan", pwd, home).context, /Multiple active features/);
-        assert.match(handleApproval("approve unknown", pwd, home).context, /Use:/);
+        assert.match(handleApproval("approve maybe nope", pwd, home).context, /Use:/);
         assert.match(handleApproval("approve plan a", pwd, home).context, /requires "planned"/);
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test("handleApproval gate-first resolves known gate token as explicit step", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
+    try {
+        const pwd = "/repo/app";
+        const dir = createFeature(pwd, "feature", { date: "2026-06-20", track: "standard" }, home);
+        const statePath = path.join(dir, "state.json");
+        setStateField(statePath, "phase", "planned");
+
+        const explicit = handleApproval("approve spec", pwd, home);
+        assert.match(explicit.context, /requires "spec"/);
+        assert.equal(readState(statePath).approved_spec, "");
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test("handleApproval gate-first resolves non-gate token as slug", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "wg-store-home-"));
+    try {
+        const pwd = "/repo/app";
+        const targetDir = createFeature(
+            pwd,
+            "some-slug",
+            { date: "2026-06-20", track: "standard" },
+            home,
+        );
+        const otherDir = createFeature(pwd, "other", { date: "2026-06-21", track: "standard" }, home);
+        const targetStatePath = path.join(targetDir, "state.json");
+        const otherStatePath = path.join(otherDir, "state.json");
+        setStateField(targetStatePath, "phase", "planned");
+        setStateField(otherStatePath, "phase", "implemented");
+
+        const result = handleApproval("approve some-slug", pwd, home);
+        assert.match(result.context, /some-slug/);
+        assert.match(readState(targetStatePath).approved_plan, /^\d{4}-\d{2}-\d{2}$/);
+        assert.equal(readState(otherStatePath).approved_implementation, "");
     } finally {
         fs.rmSync(home, { recursive: true, force: true });
     }
@@ -349,6 +475,25 @@ test("non-approval and non-reopen prompts return null", () => {
 
 test("approve design is passthrough and returns null", () => {
     assert.equal(handleApproval("approve design"), null);
+});
+
+test("approve/go/ok design forms are passthrough and return null", () => {
+    assert.equal(handleApproval("approve design"), null);
+    assert.equal(handleApproval("approve design alpha"), null);
+    assert.equal(handleApproval("go design"), null);
+    assert.equal(handleApproval("go design alpha"), null);
+    assert.equal(handleApproval("ok design"), null);
+    assert.equal(handleApproval("ok design alpha"), null);
+});
+
+test("bare approval verb with no active feature returns no active feature message", () => {
+    const result = handleApproval("approve", "/repo/app", "/home/no-such-home-for-tests");
+    assert.match(result.context, /No active feature found/);
+});
+
+test("go/ok anchored forms do not trigger approval in longer messages", () => {
+    assert.equal(handleApproval("ok let's go"), null);
+    assert.equal(handleApproval("go ahead and build it"), null);
 });
 
 function runStoreCli(args, { home, cwd }) {

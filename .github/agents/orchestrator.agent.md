@@ -45,9 +45,12 @@ Each feature lives in `~/.copilot/workflow/features/<project-slug>/<date>-<task-
 ```
 
 `phase` = the last step that completed. `approved_*` are written by the guardrail
-extension when the human types an exact approval command: `approve spec`, `approve plan`,
-`approve implementation`, `approve review`, or `approve docs`. If more than one feature is
-active, include the slug, e.g. `approve plan dark-mode`.
+extension when the human approves a gate. The approval verb may be `approve`, `go`,
+or `ok`. Bare `approve`/`go`/`ok` approves the active feature's current-phase gate;
+the explicit `approve <step>` form (`approve spec`, `approve plan`,
+`approve implementation`, `approve review`, `approve docs`) still works. If more than
+one feature is active, name the slug — either `<verb> <slug>` (e.g. `go dark-mode`)
+or the explicit `approve <step> <slug>` (e.g. `approve plan dark-mode`).
 
 **Ordering invariant:** for the autonomous phases, advance `phase` to the just-completed
 value (`implemented`/`reviewed`/`documented`) **before** you ask the human to approve it —
@@ -127,8 +130,7 @@ inside that folder.
 **Spec self-review before presenting** (fix inline): placeholder scan (no TBD/TODO),
 internal consistency, scope (single-plan sized?), ambiguity (any requirement readable two
 ways — make it explicit). Set any unanswered items to `Open questions: None` only when that
-is true. Then present a short summary + the proposed slug. Say: *"Review `spec.md` — reply
-`approve spec`, or tell me what to change."* STOP. Iterate on feedback.
+is true. Then present a short summary + the proposed slug. Say: *"Review `spec.md` — reply `approve` (or `go`/`ok`, or `approve spec`), or tell me what to change."* STOP. Iterate on feedback.
 
 ### 3. Planning (interactive — you, no subagent)
 After `approve spec` (approved_spec set): write a plan that is a **guide/contract, not a code
@@ -153,16 +155,14 @@ follow writing-plans discipline:
    contracts and behaviors.
 Write `plan.md` from the template, then set phase via
 `node .github/extensions/workflow-gate/store.mjs set phase planned --slug <slug>`. Present it.
-Say: *"Review `plan.md` —
-reply `approve plan`, or tell me what to change."* STOP. Iterate on feedback.
+Say: *"Review `plan.md` — reply `approve` (or `go`/`ok`, or `approve plan`), or tell me what to change."* STOP. Iterate on feedback.
 
 ### 4. Implement (dispatch — autonomous)
 After `approve plan` (approved_plan set): dispatch `implementer` to write code + tests per
 the plan. If the implementer reports a blocker or failed verification, keep the previous
 phase and discuss the blocker with the human. Only after the implementer reports successful
 verified completion, set phase=implemented, present the implementation summary and
-verification evidence, then say: *"Review the implementation summary and diff — reply
-`approve implementation` to start review, or tell me what to change."* STOP.
+verification evidence, then say: *"Review the implementation summary and diff — reply `approve` (or `go`/`ok`, or `approve implementation`) to start review, or tell me what to change."* STOP.
 
 ### 5. Review report + fix selection (dispatch, then interactive — you)
 After `approve implementation` (approved_implementation set): dispatch `reviewer` (in Quick
@@ -188,7 +188,7 @@ performative agreement:
 - No gratitude/performative language — state the fix, show the result. Repeat until the
   human is satisfied.
 
-When done, say: *"Reply `approve review` to lock the review and update docs."* STOP.
+When done, say: *"reply `approve` (or `go`/`ok`, or `approve review`) to lock the review and update docs."* STOP.
 
 ### 6. Docs (dispatch — autonomous)
 After `approve review` (approved_review set): dispatch `documenter` to update the repo's own
@@ -196,7 +196,7 @@ documentation so it reflects what shipped — starting from the README and follo
 references, adding what's new and fixing what the change made stale (no doc changes is a
 valid outcome). If the documenter reports a blocker, keep the previous phase and discuss it
 with the human. Only after documentation succeeds, set phase=documented. Present it. Say:
-*"Review the docs — reply `approve docs` to move to commit."* STOP.
+*"Review the docs — reply `approve` (or `go`/`ok`, or `approve docs`) to move to commit."* STOP.
 
 ### 7. Commit (interactive — you)
 After `approve docs` (approved_docs set): **ask the human their commit strategy**:

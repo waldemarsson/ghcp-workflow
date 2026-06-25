@@ -58,6 +58,9 @@ const APPROVAL_COMMANDS = {
     review: { phase: "reviewed", key: "approved_review" },
     docs: { phase: "documented", key: "approved_docs" },
 };
+const PHASE_TO_GATE = Object.fromEntries(
+    Object.entries(APPROVAL_COMMANDS).map(([gate, { phase }]) => [phase, gate]),
+);
 
 const GATE_ORDER = ["spec", "plan", "implementation", "review", "docs"];
 
@@ -217,13 +220,34 @@ export function setStateField(statePath, key, value) {
 
 function parseApprovalPrompt(prompt) {
     const trimmed = String(prompt ?? "").trim().toLowerCase();
-    if (!trimmed.startsWith("approve")) return null;
-    if (/^approve\s+design(?:\s+[a-z0-9][a-z0-9-]*)?$/.test(trimmed)) return null;
-    const match = trimmed.match(
-        /^approve\s+(spec|plan|implementation|review|docs)(?:\s+([a-z0-9][a-z0-9-]*))?$/,
-    );
-    if (!match) return { error: APPROVE_HELP };
-    return { gate: match[1], slug: match[2] };
+    const command = trimmed.match(/^(approve|go|ok)(?:\s+(.+))?$/);
+    if (!command) return null;
+
+    const [, , rest = ""] = command;
+    const tokens = rest ? rest.trim().split(/\s+/) : [];
+    const isSlug = (value) => /^[a-z0-9][a-z0-9-]*$/.test(value);
+
+    if (tokens.length === 0) return { gate: null, slug: undefined };
+    if (tokens.some((token) => !isSlug(token))) return null;
+
+    const [first, second] = tokens;
+    if (first === "design" && tokens.length <= 2 && (second === undefined || isSlug(second))) {
+        return null;
+    }
+
+    if (tokens.length === 1) {
+        if (APPROVAL_COMMANDS[first]) return { gate: first, slug: undefined };
+        if (isSlug(first)) return { gate: null, slug: first };
+        return { error: APPROVE_HELP };
+    }
+
+    if (tokens.length === 2 && APPROVAL_COMMANDS[first] && isSlug(second)) {
+        return { gate: first, slug: second };
+    }
+
+    if (tokens.length > 2) return null;
+
+    return { error: APPROVE_HELP };
 }
 
 function parseReopenPrompt(prompt) {
@@ -264,10 +288,17 @@ export function handleApproval(prompt, pwd = process.cwd(), home = os.homedir())
         };
     }
 
-    const expected = APPROVAL_COMMANDS[approval.gate];
+    const gate = approval.gate ?? PHASE_TO_GATE[active.state.phase];
+    if (!gate) {
+        return {
+            context: `Cannot infer approval gate for "${active.state.slug}" at phase "${active.state.phase}".`,
+        };
+    }
+
+    const expected = APPROVAL_COMMANDS[gate];
     if (active.state.phase !== expected.phase) {
         return {
-            context: `Cannot record "${approval.gate}" approval for "${active.state.slug}": current phase is "${active.state.phase}" but "${approval.gate}" requires "${expected.phase}".`,
+            context: `Cannot record "${gate}" approval for "${active.state.slug}": current phase is "${active.state.phase}" but "${gate}" requires "${expected.phase}".`,
         };
     }
 
