@@ -49,10 +49,21 @@ be loaded from both this repo and `~/.copilot`.
 
 ## Deploy
 
-Copy the three directories into `~/.copilot/`:
+Run the deploy script — it copies the three managed directories into `~/.copilot/`
+(additive/overwrite; it never deletes anything at the destination, so live per-feature
+state under `~/.copilot/workflow/features/` is safe):
 
 ```sh
-cp -R agents extensions workflow ~/.copilot/
+./deploy.sh            # deploy
+./deploy.sh --dry-run  # preview changes without writing
+```
+
+Or copy them by hand (per directory, so contents land in the matching target):
+
+```sh
+for d in agents extensions workflow; do
+  rsync -a --exclude='.DS_Store' "$d/" ~/.copilot/"$d"/
+done
 ```
 
 ## Path convention (important)
