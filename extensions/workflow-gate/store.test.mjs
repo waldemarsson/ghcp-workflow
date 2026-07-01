@@ -4,6 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const storeModulePath = fileURLToPath(new URL("./store.mjs", import.meta.url));
 
 import {
     collectActiveStates,
@@ -499,7 +502,7 @@ test("go/ok anchored forms do not trigger approval in longer messages", () => {
 function runStoreCli(args, { home, cwd }) {
     return spawnSync(
         process.execPath,
-        [path.join(process.cwd(), ".github/extensions/workflow-gate/store.mjs"), ...args],
+        [storeModulePath, ...args],
         {
             cwd,
             env: { ...process.env, HOME: home },
@@ -588,7 +591,7 @@ test("importing store.mjs does not execute CLI", () => {
         [
             "--input-type=module",
             "-e",
-            `import(${JSON.stringify(path.join(process.cwd(), ".github/extensions/workflow-gate/store.mjs"))});`,
+            `import(${JSON.stringify(storeModulePath)});`,
         ],
         { encoding: "utf8" },
     );

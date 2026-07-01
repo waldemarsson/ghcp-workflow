@@ -33,7 +33,7 @@ bumps, lockfile churn, internal refactors with no external surface, renames/refo
 pure test additions (unless they introduce a new pattern the team should adopt), or
 generated code. **Zero doc changes is a valid outcome** — if nothing the change touched has
 documentation weight, say so and stop. Don't manufacture documentation. When you're on the
-fence about a specific change, load `.github/workflow/references/weight-heuristics.md`.
+fence about a specific change, load `~/.copilot/workflow/references/weight-heuristics.md`.
 
 ## Steps
 
@@ -61,7 +61,7 @@ convention** so you know how to act:
   single `#` heading and relative links, and link them from the README.
 
 New content must match what's already there. When the convention isn't obvious, load
-`.github/workflow/references/conventions.md`.
+`~/.copilot/workflow/references/conventions.md`.
 
 ### 3. Update every doc the change touches
 Map each weight item to its home and update the repo's documentation to match reality:

@@ -1,6 +1,31 @@
 ---
 applyTo: "**"
 ---
+# Repository layout & deployment
+
+This repo is the **source** for a global Copilot CLI workflow that runs from `~/.copilot`.
+The editable pieces live at the repo root and are **deployed by copying them into
+`~/.copilot/`**:
+
+| Repo (edit here)                        | Runtime (`~/.copilot/`)                     |
+| --------------------------------------- | ------------------------------------------- |
+| `agents/`                               | `~/.copilot/agents/`                         |
+| `extensions/`                           | `~/.copilot/extensions/`                     |
+| `workflow/`                             | `~/.copilot/workflow/`                       |
+
+The root layout mirrors `~/.copilot/` one-to-one so deployment is a plain copy — see the
+`README.md` for the full workflow overview and deploy steps.
+
+**Path rule (critical):** any path an agent *executes or loads at runtime* (e.g. the
+`store.mjs` CLI, templates, references) MUST be written as an absolute `~/.copilot/...`
+path — never `.github/...` or a repo-relative path. Agents run from an arbitrary
+project's working directory after deployment, so only `~/.copilot/...` resolves. When
+editing files under `agents/` or `workflow/`, keep every runtime path anchored at
+`~/.copilot/`.
+
+This `.github/copilot-instructions.md` is **repo-local guidance only — it is NOT deployed
+to `~/.copilot`.**
+
 # Tool conventions
 Faster CLI tools may be installed here. Treat a tool as present only if it responds to
 `--version`; otherwise fall back silently to the standard alternative. Never refuse a

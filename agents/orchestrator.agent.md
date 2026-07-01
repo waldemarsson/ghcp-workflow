@@ -21,8 +21,8 @@ those gates is your discipline. Respect every gate; never work around a denial.
 ## Canonical structures — ALWAYS use these
 
 Every artifact MUST follow the shared template so structure is identical every time:
-- spec  -> fill `.github/workflow/templates/spec.md`
-- plan  -> fill `.github/workflow/templates/plan.md`
+- spec  -> fill `~/.copilot/workflow/templates/spec.md`
+- plan  -> fill `~/.copilot/workflow/templates/plan.md`
 
 Read the template before writing the artifact and keep its exact section structure.
 
@@ -67,7 +67,7 @@ Whenever a requested change would touch an already-approved artifact, offer this
 ## On startup — detect & resume
 
 Before anything else, run
-`node .github/extensions/workflow-gate/store.mjs list` to find active features for the current
+`node ~/.copilot/extensions/workflow-gate/store.mjs list` to find active features for the current
 `$PWD` (non-`committed`):
 - **None** → fresh start: ask the human what they want to build and begin Discovery.
 - **One** → read its `state.json` (plus `spec.md`/`plan.md`/`review.md` as they exist), tell
@@ -124,7 +124,7 @@ design with `approve design`.**
 
 ### 2. Spec (you write the file)
 When the design is approved: derive a kebab-case `slug`, run
-`node .github/extensions/workflow-gate/store.mjs create <slug> --track <standard|quick>` to
+`node ~/.copilot/extensions/workflow-gate/store.mjs create <slug> --track <standard|quick>` to
 create the feature folder and initial `state.json`, then fill the spec template into `spec.md`
 inside that folder.
 **Spec self-review before presenting** (fix inline): placeholder scan (no TBD/TODO),
@@ -154,7 +154,7 @@ follow writing-plans discipline:
    check** — the plan should not contain full implementations or full test bodies, only
    contracts and behaviors.
 Write `plan.md` from the template, then set phase via
-`node .github/extensions/workflow-gate/store.mjs set phase planned --slug <slug>`. Present it.
+`node ~/.copilot/extensions/workflow-gate/store.mjs set phase planned --slug <slug>`. Present it.
 Say: *"Review `plan.md` — reply `approve` (or `go`/`ok`, or `approve plan`), or tell me what to change."* STOP. Iterate on feedback.
 
 ### 4. Implement (dispatch — autonomous)
@@ -169,7 +169,7 @@ After `approve implementation` (approved_implementation set): dispatch `reviewer
 track you may self-review instead — see Workflow tracks). When the review comes back, **save
 the report verbatim to `<feature-dir>/review.md`** (the durable record — the reviewer
 is read-only and hands the report to you), then set phase via
-`node .github/extensions/workflow-gate/store.mjs set phase reviewed --slug <slug>`, then present it with
+`node ~/.copilot/extensions/workflow-gate/store.mjs set phase reviewed --slug <slug>`, then present it with
 **Strengths** first, then issues grouped **HIGH / MEDIUM / LOW** (each with its id), and the
 **Assessment verdict**. **Ask the human which findings to fix** (e.g. "all HIGH", specific
 ids, or none).
@@ -207,12 +207,12 @@ After `approve docs` (approved_docs set): **ask the human their commit strategy*
   `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.
 - If they will commit themselves: summarize the suggested commit breakdown and stop.
 Then set phase via
-`node .github/extensions/workflow-gate/store.mjs set phase committed --slug <slug>`.
+`node ~/.copilot/extensions/workflow-gate/store.mjs set phase committed --slug <slug>`.
 The feature is complete.
 
 ## State operations (must use CLI, never hand-edit)
 
-Use `node .github/extensions/workflow-gate/store.mjs` for all state transitions:
+Use `node ~/.copilot/extensions/workflow-gate/store.mjs` for all state transitions:
 - Create feature + initial state: `create <slug> --track standard|quick`
 - Resolve active feature path: `path --slug <slug>`
 - Read state: `get --slug <slug>`
