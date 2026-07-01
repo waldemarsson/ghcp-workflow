@@ -31,6 +31,25 @@ approves each step before the next begins.
 Per-feature state lives under `~/.copilot/workflow/features/<project-slug>/<date>-<slug>/`
 (created by `store.mjs`), never in this repo.
 
+## Model configuration
+
+Each agent picks its own model via the `model:` field in its frontmatter
+(`agents/<name>.agent.md`). To change which model an agent uses, edit that field and
+redeploy. The defaults are role-matched:
+
+| Agent          | Default model       | Why                                          |
+| -------------- | ------------------- | -------------------------------------------- |
+| `orchestrator` | `claude-opus-4.8`   | Drives the interactive phases and dispatch.  |
+| `implementer`  | `gpt-5.3-codex`     | Writes the code and tests.                   |
+| `reviewer`     | `claude-sonnet-4.6` | Reviews the diff.                            |
+| `documenter`   | `claude-sonnet-4.6` | Updates the docs.                            |
+
+There is no central config file: the `model:` frontmatter field **is** the configuration
+point, one per agent. This keeps all four agents consistent — including the
+`orchestrator`, which is invoked directly (`/agent orchestrator`) and so cannot receive a
+model override from anything that dispatches it. Model IDs go stale as new models ship, so
+check these against the models your Copilot CLI currently offers.
+
 ## Repository layout ↔ `~/.copilot`
 
 The repo root **mirrors `~/.copilot/` one-to-one**, so deployment is a plain copy:
