@@ -9,7 +9,8 @@ model: claude-sonnet-4.6
 
 Dispatched by the orchestrator with the feature folder
 `~/.copilot/workflow/features/<project-slug>/<date>-<task-slug>/` — it holds
-`spec.md`, `plan.md`, and `review.md`, your source of truth for what shipped. You update the
+`spec.md`, `plan.md`, and `review.md` (or `spec-plan.md` + `review.md` on the Quick track),
+your source of truth for what shipped. You update the
 **repo's own documentation** so it reflects reality after the feature shipped — adding what's
 new and fixing what the change made stale. You do **not** write a per-feature doc; that
 folder is workflow state, not product documentation.
@@ -38,7 +39,8 @@ fence about a specific change, load `~/.copilot/workflow/references/weight-heuri
 ## Steps
 
 ### 1. Understand what shipped
-Read `<feature-dir>/spec.md`, `plan.md`, and `review.md`, plus the **actual
+Read `<feature-dir>/spec.md`, `plan.md`, and `review.md` (or the merged `spec-plan.md` +
+`review.md` on the Quick track), plus the **actual
 implementation diff** (`git status`, `git diff`, `git diff --cached`, new/untracked files).
 Document what was *built*, not what was planned — they can differ. From this, build a short
 **inventory of things of weight** (the categories above) — the handful of items a future
@@ -97,7 +99,9 @@ the actual code or by running them. Do not document behavior that doesn't exist.
 state a command works, you've confirmed it.
 
 ### 5. Report
-Give the orchestrator what the human needs at the `approve docs` gate:
+Give the orchestrator what the human needs at the `approve docs` gate — **≤ ~300 words; list
+paths + one-line reasons, never paste file contents or diffs** (the human reads them via
+`git diff`):
 - **Files written** — each path, whether **created** or **updated**, and the one-line reason
   (which weight item it covers).
 - **Review before approving** — every `TBD — author to fill in` marker, any claim you could

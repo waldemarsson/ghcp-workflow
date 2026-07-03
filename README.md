@@ -9,6 +9,10 @@ copying the pieces into `~/.copilot/` so they work in **any** project on your ma
 The workflow drives **one feature per session** through a series of gates, where a human
 approves each step before the next begins.
 
+For token efficiency the orchestrator keeps chat terse (detail lives in the artifacts) and
+offers a **context reset** at each gate that precedes an autonomous phase — all state is
+durable on disk, so clearing the conversation and resuming loses nothing.
+
 - **`agents/` — the four workflow agents**
   - `orchestrator` — the only agent the human talks to. Runs the interactive phases
     (discovery, spec, planning, fix-selection, commit) and dispatches the others.
@@ -24,9 +28,12 @@ approves each step before the next begins.
     records each feature's phase and approvals in `state.json`.
   - `store.test.mjs` covers the store/CLI behavior.
 - **`workflow/` — shared assets the agents read at runtime**
-  - `templates/spec.md`, `templates/plan.md` — canonical artifact structures.
+  - `templates/spec.md`, `templates/plan.md` — canonical artifact structures (Standard track).
+  - `templates/spec-plan.md` — merged spec+plan artifact for the Quick track (single gate).
   - `references/conventions.md`, `references/weight-heuristics.md` — guidance the
     documenter consults.
+  - `references/review-checklist.md`, `references/verification.md` — checklists the reviewer
+    and implementer load just-in-time (kept out of their prompts to save tokens).
 
 Per-feature state lives under `~/.copilot/workflow/features/<project-slug>/<date>-<slug>/`
 (created by `store.mjs`), never in this repo.

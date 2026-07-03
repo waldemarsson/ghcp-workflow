@@ -20,7 +20,7 @@ in the rest with your best engineering judgment.
 
 ## Step 0 — Load and review the plan critically
 
-1. Read `<feature-dir>/spec.md` and `plan.md`.
+1. Read `<feature-dir>/spec.md` and `plan.md` (or the merged `spec-plan.md` on the Quick track).
 2. Review the plan critically before writing code: are the file map, contracts, and
    covered behaviors complete, unambiguous, and consistent with the spec and the current
    codebase?
@@ -50,26 +50,11 @@ yourself. For each task:
 **Iron Law: no completion claims without fresh verification evidence.** If you haven't run
 the command in this turn, you cannot say it passes. Evidence before assertions, always.
 
-Before reporting the work done, run the **gate function** for every claim:
-1. **Tests** — run the FULL suite fresh; read the output, count failures. Only claim "pass"
-   with the actual numbers (e.g. `34/34 passed`). Never "should pass" / "looks correct".
-2. **Build / lint** — run it; confirm exit 0. (Lint passing ≠ build passing — run both if
-   both exist.)
-3. **Each acceptance criterion** — re-read `spec.md`, verify each criterion line-by-line
-   against real behavior (tests passing ≠ all requirements met). Report any gaps.
-4. **Bug fixes / regression tests** — verify red-green: the test must FAIL without the fix
-   and PASS with it, not just pass once.
-
-Then return a concise summary to the orchestrator with the **evidence**:
-- what you changed (key files),
-- the exact test command + verbatim result (e.g. `14 passed, 0 failed`),
-- the build/lint command + result,
-- each acceptance criterion -> met / not met (with why),
-- any known gaps or follow-ups.
-
-Red flags that mean you are NOT done: using "should"/"probably"/"seems to", expressing
-satisfaction before running verification, or implying success without fresh output. If a
-verification fails, fix it or stop and report the real status — never paper over it.
+**Load `~/.copilot/workflow/references/verification.md` now and follow it** — it holds the
+full gate protocol (tests, build/lint, each acceptance criterion, red-green for bug fixes),
+the red-flags list, and the **canonical return format**. Return the distilled summary in that
+format (**≤ ~400 words; evidence = counts + exact commands, never pasted logs or diffs**);
+the orchestrator and human read diffs from `git diff`, not your message.
 
 ## When to STOP and return to the orchestrator (instead of guessing)
 

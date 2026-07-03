@@ -28,29 +28,14 @@ that modify the tree. If something must change, say so in the report — don't d
 
 ## Steps
 
-1. Read `<feature-dir>/spec.md` and `plan.md`.
+1. Read `<feature-dir>/spec.md` and `plan.md` (or the merged `spec-plan.md` on the Quick
+   track), then **load `~/.copilot/workflow/references/review-checklist.md`** — it holds the
+   full set of dimensions to assess and the calibration guidance.
 2. Inspect everything that changed: `git status`, `git diff`, `git diff --cached`, and
    `git ls-files --others --exclude-standard`. Read new/untracked files in full. Only
    comment on code you actually read.
 
-## What to check
-
-- **Plan alignment** — does it match spec & plan? Is all planned functionality present?
-  Are deviations justified improvements or problematic departures? Flag deviations
-  specifically. If the *plan itself* is wrong, say so.
-- **Code quality** — separation of concerns, error handling, type safety, DRY without
-  premature abstraction, edge cases.
-- **Architecture** — sound design, scalability/performance, integrates cleanly.
-- **Security** — input validation, secrets, injection, authz.
-- **Testing** — tests verify real behavior (not just mocks), edge cases covered, all tests
-  passing.
-- **Style & formatting** — naming, readability, lint/format consistency.
-- **Production readiness** — backward compatibility, migrations, docs, no obvious bugs.
-
-## Calibration
-
-Categorize by **actual** severity — not everything is HIGH. **Acknowledge what was done
-well** before listing issues; accurate praise helps the implementer trust the rest.
+Assess every dimension the checklist lists; categorize findings by real severity.
 
 ## Output format (returned to the orchestrator, which saves it to `<feature-dir>/review.md`)
 
@@ -78,7 +63,9 @@ Ready to proceed? Yes | No | With fixes
 Reasoning: 1-2 sentence technical assessment.
 ```
 
-Give every issue a **stable id** (H1, M2, L3...) so the human can select which to fix.
+Give every issue a **stable id** (H1, M2, L3...) so the human can select which to fix. Keep
+each issue to a **single line** (`id · file:line · what → why → fix`). This report **is** the
+durable artifact (`review.md`), not a chat message — no preamble, no sign-off, no gratitude.
 
 ## Critical rules
 
